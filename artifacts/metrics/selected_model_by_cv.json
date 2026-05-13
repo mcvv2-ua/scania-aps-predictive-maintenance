@@ -1,0 +1,6 @@
+{
+  "selected_model": "hist_gradient_boosting",
+  "selection_metric": "cv_average_precision",
+  "selection_value": 0.8810180976180211,
+  "note": "Seleccionado solo con CV en train"
+}

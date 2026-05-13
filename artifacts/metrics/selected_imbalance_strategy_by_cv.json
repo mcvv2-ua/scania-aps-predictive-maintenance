@@ -1,0 +1,5 @@
+{
+  "selected_strategy": "hgb_sin_ajuste",
+  "selection_metric": "cv_average_precision",
+  "note": "Seleccion hecha solo con CV en train. Test no participa."
+}

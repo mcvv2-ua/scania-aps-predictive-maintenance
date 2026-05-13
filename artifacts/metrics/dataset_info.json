@@ -1,0 +1,9 @@
+{
+  "dataset": "APS Failure at Scania Trucks",
+  "uci_id": 421,
+  "n_train": 60000,
+  "n_test": 16000,
+  "n_features": 170,
+  "fp_cost": 10,
+  "fn_cost": 500
+}

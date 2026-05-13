@@ -1,0 +1,39 @@
+{
+  "dummy": {
+    "model__strategy": "stratified"
+  },
+  "logistic_regression": {
+    "model__C": 0.1,
+    "model__class_weight": null
+  },
+  "linear_svm": {
+    "model__C": 0.1,
+    "model__class_weight": null
+  },
+  "decision_tree": {
+    "model__class_weight": null,
+    "model__max_depth": 10,
+    "model__min_samples_leaf": 10
+  },
+  "random_forest": {
+    "model__class_weight": null,
+    "model__max_depth": null,
+    "model__min_samples_leaf": 1,
+    "model__n_estimators": 100
+  },
+  "extra_trees": {
+    "model__class_weight": null,
+    "model__max_depth": null,
+    "model__min_samples_leaf": 1,
+    "model__n_estimators": 100
+  },
+  "adaboost": {
+    "model__learning_rate": 1.0,
+    "model__n_estimators": 100
+  },
+  "hist_gradient_boosting": {
+    "model__learning_rate": 0.05,
+    "model__max_iter": 200,
+    "model__max_leaf_nodes": 31
+  }
+}

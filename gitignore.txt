@@ -1,0 +1,22 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.egg-info/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+~$*
+data/raw/
+
+# Modelos regenerables al ejecutar los notebooks
+artifacts/models/*.joblib
+artifacts/models/*.pkl
+artifacts/models/*.pickle
