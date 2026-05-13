@@ -170,9 +170,3 @@ No subas `__pycache__/`.
 No subas checkpoints de notebooks.
 No subas datos raw si se descargan automaticamente.
 No subas modelos pesados si no son necesarios para la entrega.
-
-## SHAP
-
-SHAP no es dependencia obligatoria.
-El proyecto usa permutation importance y explicaciones locales sencillas.
-Si se amplia XAI con SHAP, debe instalarse aparte y justificarse en la memoria.
