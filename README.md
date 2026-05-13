@@ -1,36 +1,97 @@
-# Prediccion explicable y sensible al coste de fallos APS en camiones Scania
+# Predicción de fallos APS en camiones Scania
 
-Este proyecto usa el dataset **APS Failure at Scania Trucks** del UCI Machine Learning Repository.
-El objetivo es detectar si un fallo de un camion esta relacionado con el sistema APS.
+Proyecto de **aprendizaje automático para mantenimiento predictivo** sobre datos tabulares del sistema APS de camiones Scania. El trabajo aborda un problema con **clase positiva muy minoritaria**, valores faltantes, coste asimétrico de los errores, análisis de explicabilidad, robustez, errores, anomalías y shift entre train y test.
 
-La tarea es una clasificacion binaria.
+## Objetivo
 
-- Clase 0. Fallo no relacionado con APS.
-- Clase 1. Fallo relacionado con APS.
+El objetivo es detectar fallos relacionados con el sistema **APS** y reducir el riesgo de **falsos negativos**, ya que dejar pasar un fallo real puede tener un impacto operativo mayor que revisar un camión que finalmente no presenta ese fallo.
 
-La clase positiva es la mas importante.
-Un falso negativo puede dejar pasar un fallo APS real.
-Por eso accuracy no basta.
+La tarea se formula como clasificación binaria.
+
+
+| Clase       | Significado                  |
+| ----------- | ---------------------------- |
+| `0` / `neg` | Fallo no relacionado con APS |
+| `1` / `pos` | Fallo relacionado con APS    |
 
 ## Dataset
 
-El dataset es tabular.
-Contiene variables anonimizadas de sensores y contadores.
-Tiene muchos valores faltantes.
-La clase positiva esta muy desbalanceada.
+Se utiliza el dataset **APS Failure at Scania Trucks** del UCI Machine Learning Repository.
 
-El coste usado es el indicado por el dataset.
 
-- Falso positivo. 10.
-- Falso negativo. 500.
+| Partición | Filas |
+| ---------- | ----: |
+| Train      | 60000 |
+| Test       | 16000 |
 
-## Estructura
+El dataset contiene **170 variables predictoras** anonimizadas procedentes de sensores, contadores o agregados internos del camión. Esta anonimización supone un reto porque limita la interpretación física directa de cada variable y obliga a centrar el análisis en patrones estadísticos, rendimiento predictivo y explicabilidad indirecta. La clase positiva es minoritaria y existen numerosos valores faltantes, por lo que accuracy no es suficiente como métrica principal.
+
+## Protocolo experimental
+
+El proyecto sigue un protocolo pensado para evitar fuga de información.
+
+- La selección de modelos y configuraciones se realiza usando solo **train**.
+- Los modelos supervisados se entrenan mediante **Pipeline**.
+- La búsqueda de hiperparámetros se realiza con **GridSearchCV**.
+- Se usa **validación cruzada estratificada de 5 folds**.
+- La métrica principal de selección es **PR-AUC / average precision**, adecuada para clase positiva minoritaria.
+- El conjunto **test** se reserva exclusivamente para la evaluación final.
+- No se ajustan hiperparámetros ni umbrales usando test.
+
+## Modelos comparados
+
+
+| Familia   | Modelos                                                    |
+| --------- | ---------------------------------------------------------- |
+| Baseline  | Dummy classifier                                           |
+| Lineales  | Logistic Regression, Linear SVM                            |
+| Árboles  | Decision Tree                                              |
+| Ensembles | Random Forest, Extra Trees, AdaBoost, HistGradientBoosting |
+
+Todos los modelos se comparan bajo el mismo protocolo de validación. El baseline sirve como referencia para comprobar que los modelos aprenden señal real y no solo explotan el desbalanceo.
+
+## Resultados principales
+
+El modelo principal seleccionado es **HistGradientBoosting**, elegido exclusivamente por validación cruzada en train al obtener la mejor **PR-AUC** media.
+
+
+| Resultado                  | Valor aproximado |
+| -------------------------- | ---------------: |
+| CV PR-AUC                  |            0.881 |
+| Test PR-AUC                |            0.922 |
+| Test F1 clase positiva     |            0.842 |
+| Test recall clase positiva |            0.752 |
+| Falsos positivos en test   |               13 |
+| Falsos negativos en test   |               93 |
+
+La matriz de confusión del modelo principal en test es la siguiente.
+
+
+|               | Pred. negativo | Pred. positivo |
+| ------------- | -------------: | -------------: |
+| Real negativo |          15612 |             13 |
+| Real positivo |             93 |            282 |
+
+Estos resultados hacen que **HistGradientBoosting** sea el modelo principal defendible del proyecto. Mantiene buen ranking de positivos, buen F1 de la clase positiva y una mejora clara frente al baseline, sin usar test durante la selección.
+
+## Análisis complementarios
+
+Además del modelado supervisado principal, el proyecto incluye análisis posteriores para interpretar mejor el comportamiento del sistema.
+
+- **Coste asimétrico:** Se considera un coste de 10 para falsos positivos y 500 para falsos negativos.
+- **Estrategia sensible al coste:** `logistic_class_weight` reduce muchos falsos negativos y obtiene menor coste total, por lo que es una alternativa si el criterio prioritario fuese coste. No se presenta como modelo final.
+- **Anomalías:** Se estudian detectores de anomalías como análisis secundario. No sustituyen al modelo supervisado.
+- **XAI:** Se utiliza importancia por permutación para identificar variables influyentes del modelo.
+- **Robustez:** Se evalúa la degradación del rendimiento ante ruido.
+- **Análisis de errores:** Se revisan falsos positivos y falsos negativos para entender patrones de fallo.
+- **Shift train-test:** Se analiza si existen diferencias entre las distribuciones de train y test.
+
+## Estructura del repositorio
 
 ```text
 proyecto_scania/
   README.md
   requirements.txt
-  .gitignore
   project_utils.py
   00_descarga_y_preparacion.ipynb
   01_EDA.ipynb
@@ -38,49 +99,47 @@ proyecto_scania/
   03_desbalanceo_y_coste.ipynb
   04_anomalias.ipynb
   05_xai_robustez_errores.ipynb
-  06_resultados_memoria_y_defensa.ipynb
-  data/
-    raw/
-    processed/
-  artifacts/
-    metrics/
-    models/
-    figures/
-    tables/
+  data/        # generada localmente si no se sube completa al repositorio
+  artifacts/   # generada localmente si no se sube completa al repositorio
 ```
 
-## Instalacion
 
-Entra en la carpeta donde este el proyecto.
-Ejecuta los comandos desde la raiz de `proyecto_scania`.
+| Notebook                          | Contenido                                                                                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `00_descarga_y_preparacion.ipynb` | Descarga o carga del dataset, limpieza inicial, conversión de etiquetas y guardado de train/test procesados.                                              |
+| `01_EDA.ipynb`                    | Análisis exploratorio de distribución de clases, missing values, escalas, outliers, correlaciones y métricas adecuadas.                                 |
+| `02_modelado_supervisado.ipynb`   | Comparación principal de modelos con `Pipeline`, `GridSearchCV` y 5-fold CV. Incluye la selección de HistGradientBoosting y la evaluación final en test. |
+| `03_desbalanceo_y_coste.ipynb`    | Estudio del desbalanceo y del coste asimétrico. Incluye la comparación con `logistic_class_weight` como alternativa si se prioriza coste.                 |
+| `04_anomalias.ipynb`              | Análisis secundario de detección de anomalías para estudiar si los fallos APS se comportan como casos raros.                                            |
+| `05_xai_robustez_errores.ipynb`   | Explicabilidad con importancia por permutación, robustez ante ruido, análisis de errores y shift train-test.                                             |
 
-Windows:
+## Instalación
+
+Desde la raíz del proyecto.
 
 ```bash
-cd ruta\a\proyecto_scania
 python -m venv .venv
+```
+
+En Windows.
+
+```bash
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Linux o macOS:
+En Linux o macOS.
 
 ```bash
-cd ruta/a/proyecto_scania
-python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Ejecucion
+También puede ejecutarse en un entorno conda equivalente instalando las dependencias desde `requirements.txt`.
 
-Abre Jupyter desde la raiz del proyecto.
+## Orden de ejecución
 
-```bash
-jupyter notebook
-```
-
-Ejecuta los notebooks en este orden.
+Ejecutar los notebooks en este orden.
 
 1. `00_descarga_y_preparacion.ipynb`
 2. `01_EDA.ipynb`
@@ -88,85 +147,21 @@ Ejecuta los notebooks en este orden.
 4. `03_desbalanceo_y_coste.ipynb`
 5. `04_anomalias.ipynb`
 6. `05_xai_robustez_errores.ipynb`
-7. `06_resultados_memoria_y_defensa.ipynb`
 
-## Protocolo de evaluacion
+## Limitaciones
 
-El test se separa al principio.
-Test queda reservado para la evaluacion final.
-No se usa para elegir modelos.
-No se usa para elegir estrategias.
-No se usa para ajustar hiperparametros.
-No se usa para ajustar umbrales.
-No se usa para tomar decisiones durante el entrenamiento.
+- Las variables están **anonimizadas**, lo que limita la interpretación física de los resultados.
+- La clase positiva es **muy minoritaria**, por lo que pequeñas variaciones en falsos negativos afectan mucho a recall y coste.
+- Hay muchos **valores faltantes**, tratados mediante imputación dentro de los pipelines.
+- El coste usado es una **simplificación** basada en la penalización del dataset.
+- El proyecto no es un despliegue real en producción. No incluye monitorización, integración con sistemas de taller ni validación operacional continua.
 
-Cada modelo supervisado usa `Pipeline`.
-Cada modelo supervisado usa `GridSearchCV` con 5-fold CV solo sobre train.
-La mejor configuracion de cada modelo se selecciona solo con train.
-El modelo principal se selecciona solo con resultados de CV en train.
-HistGradientBoostingClassifier es una implementacion de Gradient Boosting en sklearn y se evalua con el mismo protocolo.
-Despues se reentrena con todo train mediante `GridSearchCV(refit=...)`.
-Los resultados de test se usan solo para la comparativa final.
+## Conclusión
 
-El analisis de desbalanceo se centra en pesos de clase, coste asimetrico y metricas adecuadas.
-Esto evita data leakage.
+El proyecto muestra que **HistGradientBoosting** es una elección principal sólida para la detección de fallos APS. El modelo fue seleccionado mediante **validación cruzada en train** usando **PR-AUC** como métrica principal, y después mantuvo un rendimiento alto en test sin usar esta partición durante la selección.
 
-## Analisis posterior
+La mejora frente al baseline confirma que los modelos aprenden señal útil en las variables del sistema, a pesar del fuerte desbalanceo, los valores faltantes y la complejidad de los datos industriales. Aun así, el análisis de errores muestra que todavía existen falsos negativos relevantes, por lo que el modelo no debe interpretarse como una solución perfecta.
 
-Los notebooks de anomalias, XAI, robustez, errores y shift se ejecutan despues de fijar el modelo.
-Son auditoria final.
-No modifican el modelo.
-No modifican los hiperparametros.
-No modifican el umbral.
-No cambian decisiones de entrenamiento.
+Los análisis complementarios aportan una lectura más realista del problema. El estudio de coste muestra que **logistic_class_weight** puede ser una alternativa interesante si el objetivo operativo principal es reducir fallos no detectados, aunque genere más falsas alarmas. Los análisis de anomalías, explicabilidad, robustez y shift ayudan a entender mejor las ventajas, limitaciones y posibles usos del sistema.
 
-## Metricas
-
-Se reportan metricas adecuadas para desbalanceo.
-
-- Accuracy.
-- Balanced accuracy.
-- Precision de la clase positiva.
-- Recall de la clase positiva.
-- F1 de la clase positiva.
-- ROC-AUC.
-- PR-AUC.
-- Matriz de confusion.
-- Coste total.
-
-La comparativa debe mirar especialmente recall, F1, PR-AUC y coste.
-
-## Artefactos
-
-Los resultados se generan al ejecutar los notebooks.
-No hay resultados inventados.
-
-Se generan artefactos en `artifacts/`.
-
-- Resultados de CV.
-- Resultados finales en test.
-- Parametros seleccionados.
-- Modelo principal.
-- Matrices de confusion.
-- Tablas de coste.
-- Resultados de anomalias.
-- Resultados de robustez.
-- Analisis de errores.
-- Analisis de shift.
-- Importancia de variables.
-- Tablas preparadas para memoria.
-
-## Tiempos
-
-El dataset es grande.
-Algunos modelos pueden tardar.
-Los grids son pequenos para que el proyecto sea ejecutable en un ordenador normal.
-One-Class SVM se entrena con una muestra para evitar tiempos excesivos.
-
-## Archivos que no se deben subir
-
-No subas `.venv/`.
-No subas `__pycache__/`.
-No subas checkpoints de notebooks.
-No subas datos raw si se descargan automaticamente.
-No subas modelos pesados si no son necesarios para la entrega.
+En conjunto, el proyecto no solo compara modelos, sino que construye un flujo experimental completo y defendible para un problema real de mantenimiento predictivo.
