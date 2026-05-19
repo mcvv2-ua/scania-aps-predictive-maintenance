@@ -21,8 +21,5 @@ artifacts/models/*.joblib
 artifacts/models/*.pkl
 artifacts/models/*.pickle
 
-# Ignorar carpeta de enunciados
-enunciados/
-
 # LaTeX
-*.tex
+memoria_scania_aps.tex
