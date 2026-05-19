@@ -230,7 +230,7 @@ Las variables tienen escalas muy diferentes. Algunas se concentran cerca de cero
 
 La Figura \ref{fig_boxplots} ilustra la diferencia de escalas y la presencia de valores extremos en algunas variables. La visualización no es completamente cómoda porque \texttt{dq\_000} alcanza valores mucho más altos que el resto y comprime visualmente las demás distribuciones. Aun así, esta evidencia justifica el escalado en modelos sensibles a la magnitud de las variables y la comparación con modelos basados en árboles.
 
-Para complementar esa visualización, la Tabla \ref{tab_outliers_iqr_resumen} resume algunas variables con mayor proporción de outliers según la regla IQR. Por este motivo, se añade la Tabla \ref{tab_outliers_iqr_resumen}, que resume algunas de las variables con mayor proporción de outliers según la regla IQR.
+Para complementar esa visualización, la Tabla \ref{tab_outliers_iqr_resumen} resume las variables con mayor proporción de outliers según la regla IQR.
 
 \begin{table}[H]
 \centering
@@ -361,7 +361,7 @@ Ensembles & Random Forest, Extra Trees, AdaBoost e HistGradientBoosting\\
 \end{tabular}
 \end{table}
 
-Todos los modelos usan imputación con mediana. La regresión logística y la SVM lineal incorporan además \texttt{StandardScaler}. La métrica principal de selección es \texttt{average\_precision}, equivalente a PR-AUC. Como métricas complementarias se reportan recall positivo, F1 positivo, balanced accuracy, ROC-AUC y coste.
+Todos los modelos usan imputación con mediana dentro del \texttt{Pipeline}, excepto \texttt{HistGradientBoosting}, que gestiona los valores faltantes de forma nativa y por tanto no necesita un paso previo de imputación. La regresión logística y la SVM lineal incorporan además \texttt{StandardScaler}. La métrica principal de selección es \texttt{average\_precision}, equivalente a PR-AUC. Como métricas complementarias se reportan recall positivo, F1 positivo, balanced accuracy, ROC-AUC y coste.
 
 \subsection{Métricas de evaluación}
 \label{sec_metricas}
@@ -384,7 +384,7 @@ C = 10 \cdot FP + 500 \cdot FN
 \subsection{Reproducibilidad}
 \label{sec_reproducibilidad}
 
-La reproducibilidad se apoya en tres decisiones. La primera es la separación de responsabilidades entre notebooks. Cada etapa produce artefactos que la siguiente puede cargar, lo que evita depender de resultados manuales. La segunda es el uso de funciones comunes en \texttt{project\_utils.py}. Este módulo define la carga del dataset, la conversión de etiquetas, el cálculo de métricas, la matriz de confusión y el coste. La tercera es la fijación de \texttt{RANDOM\_STATE = 42} en los experimentos.
+La reproducibilidad se apoya en cuatro decisiones. La primera es la separación de responsabilidades entre notebooks. Cada etapa produce artefactos que la siguiente puede cargar, lo que evita depender de resultados manuales. La segunda es la estructura de carpetas automatizada mediante la función \texttt{crear\_carpetas} de \texttt{project\_utils.py}, que genera de forma programática los directorios \texttt{data/raw}, \texttt{data/processed}, \texttt{artifacts/metrics}, \texttt{artifacts/models}, \texttt{artifacts/figures} y \texttt{artifacts/tables}, garantizando que cualquier ejecución parta de una organización de archivos consistente. La tercera es el uso de funciones comunes en \texttt{project\_utils.py}. Este módulo define la carga del dataset, la conversión de etiquetas, el cálculo de métricas, la matriz de confusión y el coste. La cuarta es la fijación de \texttt{RANDOM\_STATE = 42} en todos los experimentos, lo que asegura que los resultados sean deterministas y reproducibles ante cualquier re-ejecución.
 
 El entorno se documenta en \texttt{requirements.txt}. Las dependencias principales son \texttt{numpy}, \texttt{pandas}, \texttt{scikit-learn}, \texttt{matplotlib}, \texttt{seaborn}, \texttt{joblib}, \texttt{ucimlrepo}, \texttt{notebook} y \texttt{nbconvert}. El repositorio incluye un \texttt{README.md} con instrucciones de instalación y orden de ejecución. Esto permite reconstruir el flujo desde una máquina limpia, siempre que los datos o su descarga estén disponibles.
 
@@ -479,9 +479,9 @@ Los errores aparecen fuera de esa diagonal. Hay 13 falsos positivos, que son cam
 \subsection{Desbalanceo y coste}
 \label{sec_coste}
 
-El notebook de desbalanceo y coste no sustituye al modelo principal. Su función es estudiar cómo cambian las métricas cuando se introducen estrategias sensibles al desbalanceo. Las estrategias comparadas son \texttt{hgb\_sin\_ajuste}, \texttt{logistic\_sin\_ajuste}, \texttt{logistic\_class\_weight} y \texttt{rf\_class\_weight}.
+El notebook de desbalanceo y coste no sustituye al modelo principal. Su función es estudiar cómo cambian las métricas cuando se introducen estrategias sensibles al desbalanceo. Las estrategias comparadas son \texttt{hgb\_sin\_ajuste}, \texttt{logistic\_sin\_ajuste}, \texttt{logistic\_class\_weight} y \texttt{rf\_class\_weight}. Se decidió evaluar deliberadamente la versión de \texttt{HistGradientBoosting} sin ajuste específico para el desbalanceo ---una configuración a priori en desventaja frente a las estrategias que sí incorporan modificaciones explícitas como \texttt{class\_weight}--- para demostrar cómo, gracias a su naturaleza intrínseca de entrenamiento y robustez, el modelo sigue siendo capaz de superar a las demás alternativas incluso sin adaptaciones al coste asimétrico.
 
-La selección por PR-AUC en validación cruzada vuelve a elegir \texttt{hgb\_sin\_ajuste}, con PR-AUC media de 0.881. La Tabla \ref{tab_coste} muestra la comparación final en test de estas estrategias.
+La selección por PR-AUC en validación cruzada sobre el conjunto de entrenamiento (train) vuelve a elegir \texttt{hgb\_sin\_ajuste}, con una PR-AUC media de 0.881 obtenida estrictamente en dicha validación cruzada. La Tabla \ref{tab_coste} muestra la comparación final en test de estas estrategias.
 
 \begin{table}[H]
 \centering

@@ -2,12 +2,14 @@
 
 Proyecto de **aprendizaje automático para mantenimiento predictivo** sobre datos tabulares del sistema APS de camiones Scania. El trabajo aborda un problema con **clase positiva muy minoritaria**, valores faltantes, coste asimétrico de los errores, análisis de explicabilidad, robustez, errores, anomalías y shift entre train y test.
 
+**Autores:** Mauro Valls Vidal, Alejandro Parra Sánchez, Jordi Blasco Lozano y Alejandro Martínez Riquelme.  
+**Asignatura:** Aprendizaje Avanzado — Grado en Ingeniería en Inteligencia Artificial, Universidad de Alicante (Curso 2025–2026).
+
 ## Objetivo
 
 El objetivo es detectar fallos relacionados con el sistema **APS** y reducir el riesgo de **falsos negativos**, ya que dejar pasar un fallo real puede tener un impacto operativo mayor que revisar un camión que finalmente no presenta ese fallo.
 
 La tarea se formula como clasificación binaria.
-
 
 | Clase       | Significado                  |
 | ----------- | ---------------------------- |
@@ -18,11 +20,10 @@ La tarea se formula como clasificación binaria.
 
 Se utiliza el dataset **APS Failure at Scania Trucks** del UCI Machine Learning Repository.
 
-
 | Partición | Filas |
-| ---------- | ----: |
-| Train      | 60000 |
-| Test       | 16000 |
+| --------- | ----: |
+| Train     | 60000 |
+| Test      | 16000 |
 
 El dataset contiene **170 variables predictoras** anonimizadas procedentes de sensores, contadores o agregados internos del camión. Esta anonimización supone un reto porque limita la interpretación física directa de cada variable y obliga a centrar el análisis en patrones estadísticos, rendimiento predictivo y explicabilidad indirecta. La clase positiva es minoritaria y existen numerosos valores faltantes, por lo que accuracy no es suficiente como métrica principal.
 
@@ -40,12 +41,11 @@ El proyecto sigue un protocolo pensado para evitar fuga de información.
 
 ## Modelos comparados
 
-
 | Familia   | Modelos                                                    |
 | --------- | ---------------------------------------------------------- |
 | Baseline  | Dummy classifier                                           |
 | Lineales  | Logistic Regression, Linear SVM                            |
-| Árboles  | Decision Tree                                              |
+| Árboles   | Decision Tree                                              |
 | Ensembles | Random Forest, Extra Trees, AdaBoost, HistGradientBoosting |
 
 Todos los modelos se comparan bajo el mismo protocolo de validación. El baseline sirve como referencia para comprobar que los modelos aprenden señal real y no solo explotan el desbalanceo.
@@ -53,7 +53,6 @@ Todos los modelos se comparan bajo el mismo protocolo de validación. El baselin
 ## Resultados principales
 
 El modelo principal seleccionado es **HistGradientBoosting**, elegido exclusivamente por validación cruzada en train al obtener la mejor **PR-AUC** media.
-
 
 | Resultado                  | Valor aproximado |
 | -------------------------- | ---------------: |
@@ -65,7 +64,6 @@ El modelo principal seleccionado es **HistGradientBoosting**, elegido exclusivam
 | Falsos negativos en test   |               93 |
 
 La matriz de confusión del modelo principal en test es la siguiente.
-
 
 |               | Pred. negativo | Pred. positivo |
 | ------------- | -------------: | -------------: |
@@ -93,6 +91,7 @@ proyecto_scania/
   README.md
   requirements.txt
   project_utils.py
+  memoria_scania_aps.pdf
   00_descarga_y_preparacion.ipynb
   01_EDA.ipynb
   02_modelado_supervisado.ipynb
@@ -103,14 +102,13 @@ proyecto_scania/
   artifacts/   # generada localmente si no se sube completa al repositorio
 ```
 
-
-| Notebook                          | Contenido                                                                                                                                                  |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `00_descarga_y_preparacion.ipynb` | Descarga o carga del dataset, limpieza inicial, conversión de etiquetas y guardado de train/test procesados.                                              |
-| `01_EDA.ipynb`                    | Análisis exploratorio de distribución de clases, missing values, escalas, outliers, correlaciones y métricas adecuadas.                                 |
+| Notebook                          | Contenido                                                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `00_descarga_y_preparacion.ipynb` | Descarga o carga del dataset, limpieza inicial, conversión de etiquetas y guardado de train/test procesados.                                             |
+| `01_EDA.ipynb`                    | Análisis exploratorio de distribución de clases, missing values, escalas, outliers, correlaciones y métricas adecuadas.                                  |
 | `02_modelado_supervisado.ipynb`   | Comparación principal de modelos con `Pipeline`, `GridSearchCV` y 5-fold CV. Incluye la selección de HistGradientBoosting y la evaluación final en test. |
-| `03_desbalanceo_y_coste.ipynb`    | Estudio del desbalanceo y del coste asimétrico. Incluye la comparación con `logistic_class_weight` como alternativa si se prioriza coste.                 |
-| `04_anomalias.ipynb`              | Análisis secundario de detección de anomalías para estudiar si los fallos APS se comportan como casos raros.                                            |
+| `03_desbalanceo_y_coste.ipynb`    | Estudio del desbalanceo y del coste asimétrico. Incluye la comparación con `logistic_class_weight` como alternativa si se prioriza coste.                |
+| `04_anomalias.ipynb`              | Análisis secundario de detección de anomalías para estudiar si los fallos APS se comportan como casos raros.                                             |
 | `05_xai_robustez_errores.ipynb`   | Explicabilidad con importancia por permutación, robustez ante ruido, análisis de errores y shift train-test.                                             |
 
 ## Instalación
@@ -152,7 +150,7 @@ Ejecutar los notebooks en este orden.
 
 - Las variables están **anonimizadas**, lo que limita la interpretación física de los resultados.
 - La clase positiva es **muy minoritaria**, por lo que pequeñas variaciones en falsos negativos afectan mucho a recall y coste.
-- Hay muchos **valores faltantes**, tratados mediante imputación dentro de los pipelines.
+- Hay muchos **valores faltantes**, tratados mediante imputación con mediana dentro de los pipelines, excepto en HistGradientBoosting, que los gestiona de forma nativa.
 - El coste usado es una **simplificación** basada en la penalización del dataset.
 - El proyecto no es un despliegue real en producción. No incluye monitorización, integración con sistemas de taller ni validación operacional continua.
 

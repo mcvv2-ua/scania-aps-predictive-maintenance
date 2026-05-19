@@ -23,3 +23,6 @@ artifacts/models/*.pickle
 
 # Ignorar carpeta de enunciados
 enunciados/
+
+# LaTeX
+*.tex
